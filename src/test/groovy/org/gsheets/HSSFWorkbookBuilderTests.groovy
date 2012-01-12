@@ -19,6 +19,7 @@ class HSSFWorkbookBuilderTests extends GroovyTestCase {
     void testCreateSimpleWorkbook()  {
         Workbook workbook = new HSSFWorkbookBuilder().workbook {
 
+            // style definitions
             font("bold")  { Font font ->
                 font.setBoldweight(Font.BOLDWEIGHT_BOLD)
             }
@@ -27,13 +28,16 @@ class HSSFWorkbookBuilderTests extends GroovyTestCase {
                 cellStyle.setAlignment(CellStyle.ALIGN_CENTER)
             }
 
+            // data
             sheet ("Export")  {
                 header(["Column1", "Column2", "Column3"])
 
                 row(["a", "b", "c"])
             }
 
-            applyCellStyle(cellStyle: "header", font: "bold",   rows: 1, columns: 1..3)
+            // apply styles
+            applyCellStyle(cellStyle: "header", font: "bold", rows: 1, columns: 1..3)
+            mergeCells(rows: 1, columns: 1..3)
         }
 
         def excelOut = new FileOutputStream(excel)

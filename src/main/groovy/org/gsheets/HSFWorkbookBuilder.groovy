@@ -8,6 +8,7 @@ import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import org.apache.poi.ss.usermodel.CellStyle
 import org.apache.poi.ss.usermodel.Font
+import org.apache.poi.ss.util.CellRangeAddress
 
 /**
  * @author me@andresteingress.com
@@ -22,6 +23,8 @@ class HSSFWorkbookBuilder {
     private Map<String, Font> fonts = [:]
 
     Workbook workbook(Closure closure) {
+        assert closure
+
         closure.delegate = this
         closure.call()
         workbook
@@ -60,10 +63,10 @@ class HSSFWorkbookBuilder {
     }
 
     void applyCellStyle(Map<String, Object> args)  {
-        String cellStyleId = args.get("cellStyle")
-        def rows = args.get("rows")
-        def cells = args.get("columns")
-        def fontId = args.get("font")
+        String cellStyleId = args.cellStyle
+        def rows = args.rows
+        def cells = args.columns
+        def fontId = args.font
 
         assert cellStyleId && cellStyles.containsKey(cellStyleId)
         assert rows && (rows instanceof Number || rows instanceof Range<Number>)
@@ -89,6 +92,19 @@ class HSSFWorkbookBuilder {
                 if (fontId) cell.getCellStyle().setFont(fonts.get(fontId))
             }
         }
+    }
+
+    void mergeCells(Map<String, Object> args)  {
+        def rows = args.rows
+        def cols = args.columns
+        
+        assert rows && (rows instanceof Number || rows instanceof Range<Number>)
+        assert cols && (cols instanceof Number || cols instanceof Range<Number>)
+
+        if (rows instanceof Number) rows = [rows]
+        if (cols instanceof Number) cols = [cols]
+
+        sheet.addMergedRegion(new CellRangeAddress(rows.first() - 1, rows.last() - 1, cols.first() - 1, cols.last() - 1))
     }
 
     void header(List<String> names)  {
