@@ -2,6 +2,8 @@ apply plugin: 'eclipse'
 apply plugin: 'groovy'
 apply plugin: 'idea'
 
+version="0.1-SNAPSHOT"
+
 repositories {
     mavenCentral()
 }
