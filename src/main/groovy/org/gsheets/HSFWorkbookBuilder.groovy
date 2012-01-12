@@ -12,9 +12,38 @@ import org.apache.poi.ss.util.CellRangeAddress
 import org.apache.poi.ss.usermodel.DataFormat
 
 /**
+ * Groovy builder used to create XLS files based on Apache POI HSSF.
+ *
+ * <pre>
+ *
+ * Workbook workbook = new HSSFWorkbookBuilder().workbook {
+ *
+ * // style definitions
+ * font("bold")  { Font font ->
+ *     font.setBoldweight(Font.BOLDWEIGHT_BOLD)
+ * }
+ *
+ * cellStyle ("header")  { CellStyle cellStyle ->
+ *     cellStyle.setAlignment(CellStyle.ALIGN_CENTER)
+ * }
+ *
+ * // data
+ * sheet ("Export")  {
+ *     header(["Column1", "Column2", "Column3"])
+ *
+ *     row(["a", "b", "c"])
+ * }
+ *
+ * // apply styles
+ * applyCellStyle(cellStyle: "header", font: "bold", rows: 1, columns: 1..3)
+ * mergeCells(rows: 1, columns: 1..3)
+ * }
+ *
+ * </pre>
+ *
  * @author me@andresteingress.com
  */
-class HSSFWorkbookBuilder {
+class HSSFWorkbookBuilder extends NodeBuilder {
 
     private Workbook workbook = new HSSFWorkbook()
     private Sheet sheet
@@ -29,6 +58,27 @@ class HSSFWorkbookBuilder {
         closure.delegate = this
         closure.call()
         workbook
+    }
+
+    void styles(Closure closure) {
+        assert closure
+
+        closure.delegate = this
+        closure.call()
+    }
+
+    void data(Closure closure) {
+        assert closure
+
+        closure.delegate = this
+        closure.call()
+    }
+
+    void commands(Closure closure) {
+        assert closure
+
+        closure.delegate = this
+        closure.call()
     }
 
     void sheet(String name, Closure closure) {
@@ -67,10 +117,10 @@ class HSSFWorkbookBuilder {
         def cellStyleId = args.cellStyle
         def fontId = args.font
         def dataFormat = args.dataFormat
-        
+
         def rows = args.rows
         def cells = args.columns
-        
+
         assert cellStyleId || fontId || dataFormat
 
         assert rows && (rows instanceof Number || rows instanceof Range<Number>)
@@ -142,5 +192,4 @@ class HSSFWorkbookBuilder {
             }
         }
     }
-
 }

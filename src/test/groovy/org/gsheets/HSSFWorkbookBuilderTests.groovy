@@ -19,26 +19,30 @@ class HSSFWorkbookBuilderTests extends GroovyTestCase {
     void testCreateSimpleWorkbook()  {
         Workbook workbook = new HSSFWorkbookBuilder().workbook {
 
-            // style definitions
-            font("bold")  { Font font ->
-                font.setBoldweight(Font.BOLDWEIGHT_BOLD)
+            styles {
+                font("bold")  { Font font ->
+                    font.setBoldweight(Font.BOLDWEIGHT_BOLD)
+                }
+
+                cellStyle ("header")  { CellStyle cellStyle ->
+                    cellStyle.setAlignment(CellStyle.ALIGN_CENTER)
+
+                }
             }
 
-            cellStyle ("header")  { CellStyle cellStyle ->
-                cellStyle.setAlignment(CellStyle.ALIGN_CENTER)
+            data {
+                // data
+                sheet ("Export")  {
+                    header(["Column1", "Column2", "Column3"])
 
+                    row(["a", "b", "c"])
+                }
             }
 
-            // data
-            sheet ("Export")  {
-                header(["Column1", "Column2", "Column3"])
-
-                row(["a", "b", "c"])
+            commands {
+                applyCellStyle(cellStyle: "header", font: "bold", rows: 1, columns: 1..3)
+                mergeCells(rows: 1, columns: 1..3)
             }
-
-            // apply styles
-            applyCellStyle(cellStyle: "header", font: "bold", rows: 1, columns: 1..3)
-            mergeCells(rows: 1, columns: 1..3)
         }
 
         def excelOut = new FileOutputStream(excel)
