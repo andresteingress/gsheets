@@ -19,6 +19,7 @@ local.properties
 *.ipr
 *.iws
 .idea/
+.gradle/
 
 .DS_Store
 Icon?
