@@ -26,6 +26,7 @@ class HSSFWorkbookBuilderTests extends GroovyTestCase {
 
             cellStyle ("header")  { CellStyle cellStyle ->
                 cellStyle.setAlignment(CellStyle.ALIGN_CENTER)
+
             }
 
             // data

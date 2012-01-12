@@ -9,6 +9,7 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import org.apache.poi.ss.usermodel.CellStyle
 import org.apache.poi.ss.usermodel.Font
 import org.apache.poi.ss.util.CellRangeAddress
+import org.apache.poi.ss.usermodel.DataFormat
 
 /**
  * @author me@andresteingress.com
@@ -63,16 +64,22 @@ class HSSFWorkbookBuilder {
     }
 
     void applyCellStyle(Map<String, Object> args)  {
-        String cellStyleId = args.cellStyle
+        def cellStyleId = args.cellStyle
+        def fontId = args.font
+        def dataFormat = args.dataFormat
+        
         def rows = args.rows
         def cells = args.columns
-        def fontId = args.font
+        
+        assert cellStyleId || fontId || dataFormat
 
-        assert cellStyleId && cellStyles.containsKey(cellStyleId)
         assert rows && (rows instanceof Number || rows instanceof Range<Number>)
         assert cells && (cells instanceof Number || cells instanceof Range<Number>)
-        
+
+        if (cellStyleId && !cellStyles.containsKey(cellStyleId)) cellStyleId = null
         if (fontId && !fonts.containsKey(fontId)) fontId = null
+        if (dataFormat && !(dataFormat instanceof String)) dataFormat = null
+
         if (rows instanceof  Number) rows = [rows]
         if (cells instanceof  Number) cells = [cells]
 
@@ -88,8 +95,12 @@ class HSSFWorkbookBuilder {
                 Cell cell = row.getCell(cellIndex.intValue() - 1)
                 if (!cell) return
 
-                cell.setCellStyle(cellStyles.get(cellStyleId))
+                if (cellStyleId) cell.setCellStyle(cellStyles.get(cellStyleId))
                 if (fontId) cell.getCellStyle().setFont(fonts.get(fontId))
+                if (dataFormat) {
+                    DataFormat df = workbook.createDataFormat()
+                    cell.getCellStyle().setDataFormat(df.getFormat(dataFormat as String))
+                }
             }
         }
     }
@@ -97,7 +108,7 @@ class HSSFWorkbookBuilder {
     void mergeCells(Map<String, Object> args)  {
         def rows = args.rows
         def cols = args.columns
-        
+
         assert rows && (rows instanceof Number || rows instanceof Range<Number>)
         assert cols && (cols instanceof Number || cols instanceof Range<Number>)
 
