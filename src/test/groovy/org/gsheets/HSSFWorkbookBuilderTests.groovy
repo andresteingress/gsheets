@@ -12,7 +12,7 @@ class HSSFWorkbookBuilderTests extends GroovyTestCase {
     File excel
 
     void setUp() {
-        excel = new File("/Users/andre/Development/Projects/Adternity/temp/test.xls")
+        excel = new File("/Users/andre/Development/Projects/gsheets/temp/test.xls")
         if (!excel.exists()) excel.createNewFile()
     }
 
