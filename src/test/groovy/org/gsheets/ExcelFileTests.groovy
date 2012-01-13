@@ -38,7 +38,7 @@ import org.apache.poi.ss.usermodel.Font
 /**
  * @author me@andresteingress.com
  */
-class HSSFWorkbookBuilderTests extends GroovyTestCase {
+class ExcelFileTests extends GroovyTestCase {
 
     File excel
 
@@ -48,7 +48,7 @@ class HSSFWorkbookBuilderTests extends GroovyTestCase {
     }
 
     void testCreateSimpleWorkbook()  {
-        Workbook workbook = new HSSFWorkbookBuilder().workbook {
+        Workbook workbook = new ExcelFile().workbook {
 
             styles {
                 font("bold")  { Font font ->
@@ -72,7 +72,7 @@ class HSSFWorkbookBuilderTests extends GroovyTestCase {
 
             commands {
                 applyCellStyle(cellStyle: "header", font: "bold", rows: 1, columns: 1..3)
-                mergeCells(rows: 1, columns: 1..3)
+                // mergeCells(rows: 1, columns: 1..3)
             }
         }
 

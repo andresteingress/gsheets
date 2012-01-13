@@ -44,38 +44,44 @@ import org.apache.poi.ss.util.CellRangeAddress
 import org.apache.poi.ss.usermodel.DataFormat
 
 /**
- * Groovy builder used to create XLS files based on Apache POI HSSF.
+ * A Groovy builder that wraps Apache POI for generating binary Microsoft Excel sheets.
  *
  * <pre>
  *
- * Workbook workbook = new HSSFWorkbookBuilder().workbook {
+ * Workbook workbook = new ExcelFile().workbook {
  *
- * // style definitions
- * font("bold")  { Font font ->
- *     font.setBoldweight(Font.BOLDWEIGHT_BOLD)
+ * // define cell styles and fonts
+ * styles {
+ *   font("bold")  { Font font ->
+ *       font.setBoldweight(Font.BOLDWEIGHT_BOLD)
+ *   }
+ *
+ *   cellStyle ("header")  { CellStyle cellStyle ->
+ *       cellStyle.setAlignment(CellStyle.ALIGN_CENTER)
+ *   }
  * }
  *
- * cellStyle ("header")  { CellStyle cellStyle ->
- *     cellStyle.setAlignment(CellStyle.ALIGN_CENTER)
+ * // declare the data to use
+ * data {
+ *   sheet ("Export")  {
+ *       header(["Column1", "Column2", "Column3"])
+ *
+ *       row(["a", "b", "c"])
+ *   }
  * }
  *
- * // data
- * sheet ("Export")  {
- *     header(["Column1", "Column2", "Column3"])
- *
- *     row(["a", "b", "c"])
+ * // apply link styles with data through 'commands'
+ * commands {
+ *     applyCellStyle(cellStyle: "header", font: "bold", rows: 1, columns: 1..3)
+ *     mergeCells(rows: 1, columns: 1..3)
  * }
- *
- * // apply styles
- * applyCellStyle(cellStyle: "header", font: "bold", rows: 1, columns: 1..3)
- * mergeCells(rows: 1, columns: 1..3)
  * }
  *
  * </pre>
  *
- * @author me@andresteingress.com
+ * @author asteingress
  */
-class HSSFWorkbookBuilder extends NodeBuilder {
+class ExcelFile {
 
     private Workbook workbook = new HSSFWorkbook()
     private Sheet sheet
@@ -84,6 +90,12 @@ class HSSFWorkbookBuilder extends NodeBuilder {
     private Map<String, CellStyle> cellStyles = [:]
     private Map<String, Font> fonts = [:]
 
+    /**
+     * Creates a new workbook.
+     *
+     * @param the closure holds nested {@link ExcelFile} method calls
+     * @return the created {@link Workbook}
+     */
     Workbook workbook(Closure closure) {
         assert closure
 
@@ -114,6 +126,8 @@ class HSSFWorkbookBuilder extends NodeBuilder {
     }
 
     void sheet(String name, Closure closure) {
+        assert workbook
+
         assert name
         assert closure
 
@@ -124,6 +138,8 @@ class HSSFWorkbookBuilder extends NodeBuilder {
     }
 
     void cellStyle(String cellStyleId, Closure closure)  {
+        assert workbook
+
         assert cellStyleId
         assert !cellStyles.containsKey(cellStyleId)
         assert closure
@@ -135,6 +151,8 @@ class HSSFWorkbookBuilder extends NodeBuilder {
     }
 
     void font(String fontId, Closure closure)  {
+        assert workbook
+
         assert fontId
         assert !fonts.containsKey(fontId)
         assert closure
@@ -146,14 +164,18 @@ class HSSFWorkbookBuilder extends NodeBuilder {
     }
 
     void applyCellStyle(Map<String, Object> args)  {
+        assert workbook
+
         def cellStyleId = args.cellStyle
         def fontId = args.font
         def dataFormat = args.dataFormat
 
         def sheetName = args.sheet
 
-        def rows = args.rows
-        def cells = args.columns
+        def rows = args.rows ?: -1          // -1 denotes all rows
+        def cells = args.columns ?: -1      // -1 denotes all cols
+
+        def colName = args.columnName
 
         assert cellStyleId || fontId || dataFormat
 
@@ -164,36 +186,46 @@ class HSSFWorkbookBuilder extends NodeBuilder {
         if (fontId && !fonts.containsKey(fontId)) fontId = null
         if (dataFormat && !(dataFormat instanceof String)) dataFormat = null
         if (sheetName && !(sheetName instanceof String)) sheetName = null
+        if (colName && !(colName instanceof String)) colName = null
 
+        def sheet = sheetName ? workbook.getSheet(sheetName as String) : workbook.getSheetAt(0)
+        assert sheet
+
+        if (rows == -1)  rows  = [1..rowsCounter]
         if (rows instanceof  Number) rows = [rows]
-        if (cells instanceof  Number) cells = [cells]
 
         rows.each { Number rowIndex ->
             assert rowIndex
 
-            cells.each { Number cellIndex ->
+            Row row = sheet.getRow(rowIndex.intValue() - 1)
+            if (!row) return
+
+            if (cells == -1)  cells  = [row.firstCellNum..row.lastCellNum]
+            if (rows instanceof  Number) rows = [rows]
+
+            def applyStyleFunc = { Number cellIndex ->
                 assert cellIndex
-
-                def sheet = sheetName ? workbook.getSheet(sheetName as String) : workbook.getSheetAt(0)
-                assert sheet
-
-                Row row = sheet.getRow(rowIndex.intValue() - 1)
-                if (!row) return
 
                 Cell cell = row.getCell(cellIndex.intValue() - 1)
                 if (!cell) return
 
-                if (cellStyleId) cell.setCellStyle(cellStyles.get(cellStyleId))
+                cell.setCellStyle(workbook.createCellStyle())
+
+                if (cellStyleId) cell.getCellStyle().cloneStyleFrom(cellStyles.get(cellStyleId))
                 if (fontId) cell.getCellStyle().setFont(fonts.get(fontId))
                 if (dataFormat) {
                     DataFormat df = workbook.createDataFormat()
                     cell.getCellStyle().setDataFormat(df.getFormat(dataFormat as String))
                 }
             }
+
+            cells.each applyStyleFunc
         }
     }
 
     void mergeCells(Map<String, Object> args)  {
+        assert workbook
+
         def rows = args.rows
         def cols = args.columns
         def sheetName = args.sheet
@@ -206,11 +238,12 @@ class HSSFWorkbookBuilder extends NodeBuilder {
         if (sheetName && !(sheetName instanceof String)) sheetName = null
 
         def sheet = sheetName ? workbook.getSheet(sheetName as String) : workbook.getSheetAt(0)
-        
+
         sheet.addMergedRegion(new CellRangeAddress(rows.first() - 1, rows.last() - 1, cols.first() - 1, cols.last() - 1))
     }
 
     void header(List<String> names)  {
+        assert sheet
         assert names
 
         Row row = sheet.createRow(rowsCounter++ as int)
@@ -221,6 +254,7 @@ class HSSFWorkbookBuilder extends NodeBuilder {
     }
 
     void row(values) {
+        assert sheet
         assert values
 
         Row row = sheet.createRow(rowsCounter++ as int)
@@ -230,8 +264,15 @@ class HSSFWorkbookBuilder extends NodeBuilder {
                 case Date: cell.setCellValue((Date) value); break
                 case Double: cell.setCellValue((Double) value); break
                 case BigDecimal: cell.setCellValue(((BigDecimal) value).doubleValue()); break
-                default: cell.setCellValue(new HSSFRichTextString("" + value)); break
+                case Number: cell.setCellValue(((Number) value).doubleValue()); break
+                default: cell.setCellValue(new HSSFRichTextString(value != null ? value.toString() : "")); break
             }
         }
+    }
+
+    int getRowCount()  {
+        assert sheet
+
+        rowsCounter
     }
 }
