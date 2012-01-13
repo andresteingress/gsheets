@@ -27,3 +27,34 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 GSheets is a Groovy builder based on Apache POI.
+
+```groovy
+Workbook workbook = new ExcelFile().workbook {
+
+            // section for workbook formatting styles
+            styles {
+                font("bold")  { Font font ->
+                    font.setBoldweight(Font.BOLDWEIGHT_BOLD)
+                }
+
+                cellStyle ("header")  { CellStyle cellStyle ->
+                    cellStyle.setAlignment(CellStyle.ALIGN_CENTER)
+
+                }
+            }
+
+	    // section for workbook data
+            data {
+                sheet ("Export")  {
+                    header(["Column1", "Column2", "Column3"])
+
+                    row(["a", "b", "c"])
+                }
+            }
+
+            // section for applying commands i.e. apply a cell style, merge cells etc.
+            commands {
+                applyCellStyle(cellStyle: "header", font: "bold", rows: 1, columns: 1..3)
+            }
+        }
+```
