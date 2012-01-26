@@ -33,15 +33,9 @@
 package org.gsheets
 
 import org.apache.poi.hssf.usermodel.HSSFRichTextString
-import org.apache.poi.ss.usermodel.Cell
-import org.apache.poi.ss.usermodel.Row
-import org.apache.poi.ss.usermodel.Workbook
-import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.hssf.usermodel.HSSFWorkbook
-import org.apache.poi.ss.usermodel.CellStyle
-import org.apache.poi.ss.usermodel.Font
 import org.apache.poi.ss.util.CellRangeAddress
-import org.apache.poi.ss.usermodel.DataFormat
+import org.apache.poi.ss.usermodel.*
 
 /**
  * A Groovy builder that wraps Apache POI for generating binary Microsoft Excel sheets.
@@ -79,7 +73,7 @@ import org.apache.poi.ss.usermodel.DataFormat
  *
  * </pre>
  *
- * @author asteingress
+ * @author me@andresteingress.com
  */
 class ExcelFile {
 
@@ -133,7 +127,8 @@ class ExcelFile {
 
         sheet = workbook.createSheet(name)
         rowsCounter = 0
-        closure.delegate = this
+
+        closure.delegate = sheet
         closure.call()
     }
 
@@ -242,6 +237,26 @@ class ExcelFile {
         sheet.addMergedRegion(new CellRangeAddress(rows.first() - 1, rows.last() - 1, cols.first() - 1, cols.last() - 1))
     }
 
+    void applyColumnWidth(Map<String, Object> args)  {
+        assert workbook
+
+        def cols = args.columns
+        def sheetName = args.sheet
+        def width = args.width
+
+        assert cols && (cols instanceof Number || cols instanceof Range<Number>)
+        assert width && width instanceof Number
+
+        if (cols instanceof Number) cols = [cols]
+        if (sheetName && !(sheetName instanceof String)) sheetName = null
+
+        def sheet = sheetName ? workbook.getSheet(sheetName as String) : workbook.getSheetAt(0)
+
+        cols.each {
+            sheet.setColumnWidth(it - 1, width.intValue())
+        }
+    }
+
     void header(List<String> names)  {
         assert sheet
         assert names
@@ -251,6 +266,12 @@ class ExcelFile {
             Cell cell = row.createCell(col)
             cell.setCellValue(value)
         }
+    }
+
+    void emptyRow()  {
+        assert sheet
+
+        sheet.createRow(rowsCounter++ as int)
     }
 
     void row(values) {
