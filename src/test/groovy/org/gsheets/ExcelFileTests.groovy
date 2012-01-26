@@ -72,6 +72,7 @@ class ExcelFileTests extends GroovyTestCase {
 
             commands {
                 applyCellStyle(cellStyle: "header", font: "bold", rows: 1, columns: 1..3)
+                applyColumnWidth(columns: 1..2, width: 200)
                 // mergeCells(rows: 1, columns: 1..3)
             }
         }
