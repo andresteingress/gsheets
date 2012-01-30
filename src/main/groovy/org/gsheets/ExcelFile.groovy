@@ -36,6 +36,7 @@ import org.apache.poi.hssf.usermodel.HSSFRichTextString
 import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import org.apache.poi.ss.util.CellRangeAddress
 import org.apache.poi.ss.usermodel.*
+import org.apache.poi.hssf.usermodel.HSSFCell
 
 /**
  * A Groovy builder that wraps Apache POI for generating binary Microsoft Excel sheets.
@@ -286,7 +287,15 @@ class ExcelFile {
                 case Double: cell.setCellValue((Double) value); break
                 case BigDecimal: cell.setCellValue(((BigDecimal) value).doubleValue()); break
                 case Number: cell.setCellValue(((Number) value).doubleValue()); break
-                default: cell.setCellValue(new HSSFRichTextString(value != null ? value.toString() : "")); break
+                default:
+                    def stringValue = value?.toString() ?: ""
+                    if (stringValue.startsWith('=')) {
+                        cell.setCellType(Cell.CELL_TYPE_FORMULA)
+                        cell.setCellFormula(stringValue.substring(1))
+                    } else {
+                        cell.setCellValue(new HSSFRichTextString(stringValue))
+                    }
+                    break
             }
         }
     }
