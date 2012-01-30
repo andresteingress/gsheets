@@ -34,6 +34,7 @@ package org.gsheets
 import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.ss.usermodel.CellStyle
 import org.apache.poi.ss.usermodel.Font
+import org.apache.poi.hssf.usermodel.HSSFCell
 
 /**
  * @author me@andresteingress.com
@@ -66,7 +67,8 @@ class ExcelFileTests extends GroovyTestCase {
                 sheet ("Export")  {
                     header(["Column1", "Column2", "Column3"])
 
-                    row(["a", "b", "c"])
+                    row([10, 20, "=A2*B2"])
+                    row(["", "", "=sum(C2)"])
                 }
             }
 
