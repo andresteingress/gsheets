@@ -43,7 +43,7 @@ class ExcelFileTests extends GroovyTestCase {
     File excel
 
     void setUp() {
-        excel = new File("/Users/andre/Development/Projects/gsheets/temp/test.xls")
+        excel = new File("test.xls")
         if (!excel.exists()) excel.createNewFile()
     }
 
