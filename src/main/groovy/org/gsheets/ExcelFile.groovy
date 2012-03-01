@@ -37,6 +37,7 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import org.apache.poi.ss.util.CellRangeAddress
 import org.apache.poi.ss.usermodel.*
 import org.apache.poi.hssf.usermodel.HSSFCell
+import org.apache.poi.hssf.usermodel.HSSFSheet
 
 /**
  * A Groovy builder that wraps Apache POI for generating binary Microsoft Excel sheets.
@@ -126,7 +127,10 @@ class ExcelFile {
         assert name
         assert closure
 
-        sheet = workbook.createSheet(name)
+        sheet = workbook.getSheet(name)
+        if (!sheet) {
+            sheet = workbook.createSheet(name)
+        }
         rowsCounter = 0
 
         closure.delegate = sheet
