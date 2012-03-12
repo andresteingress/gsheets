@@ -79,7 +79,7 @@ import org.apache.poi.hssf.usermodel.HSSFSheet
  */
 class ExcelFile {
 
-    private Workbook workbook = new HSSFWorkbook()
+    Workbook workbook = new HSSFWorkbook()
     private Sheet sheet
     private int rowsCounter
 
@@ -209,9 +209,7 @@ class ExcelFile {
                 Cell cell = row.getCell(cellIndex.intValue() - 1)
                 if (!cell) return
 
-                cell.setCellStyle(workbook.createCellStyle())
-
-                if (cellStyleId) cell.getCellStyle().cloneStyleFrom(cellStyles.get(cellStyleId))
+                if (cellStyleId) cell.setCellStyle(cellStyles.get(cellStyleId))
                 if (fontId) cell.getCellStyle().setFont(fonts.get(fontId))
                 if (dataFormat) {
                     DataFormat df = workbook.createDataFormat()
