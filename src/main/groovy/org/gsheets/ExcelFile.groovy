@@ -69,6 +69,9 @@ import org.apache.poi.hssf.usermodel.HSSFCell
  * commands {
  *     applyCellStyle(cellStyle: "header", font: "bold", rows: 1, columns: 1..3)
  *     mergeCells(rows: 1, columns: 1..3)
+ *
+ *     // autosize columns. useMergedCells is optional, defaults to false.
+ *     applyAutoSizeColumn(columns: 1..3, useMergedCells: true)
  * }
  * }
  *
@@ -253,6 +256,20 @@ class ExcelFile {
 
         cols.each {
             sheet.setColumnWidth(it - 1, width.intValue())
+        }
+    }
+
+	void applyAutoSizeColumn(Map<String, Object> args) {
+        assert sheet
+
+        def cols = args.columns
+        def useMergedCells = args.useMergedCells ?: false
+
+        assert cols && (cols instanceof Number || cols instanceof Range<Number>)
+        assert useMergedCells instanceof Boolean
+
+        cols.each {
+            sheet.autoSizeColumn(it - 1, useMergedCells);
         }
     }
 
