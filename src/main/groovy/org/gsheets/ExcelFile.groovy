@@ -34,9 +34,8 @@ package org.gsheets
 
 import org.apache.poi.hssf.usermodel.HSSFRichTextString
 import org.apache.poi.hssf.usermodel.HSSFWorkbook
-import org.apache.poi.ss.util.CellRangeAddress
 import org.apache.poi.ss.usermodel.*
-import org.apache.poi.hssf.usermodel.HSSFCell
+import org.apache.poi.ss.util.CellRangeAddress
 
 /**
  * A Groovy builder that wraps Apache POI for generating binary Microsoft Excel sheets.
@@ -78,12 +77,48 @@ import org.apache.poi.hssf.usermodel.HSSFCell
  */
 class ExcelFile {
 
-    Workbook workbook = new HSSFWorkbook()
+    Workbook workbook
     private Sheet sheet
     private int rowsCounter
 
     private Map<String, CellStyle> cellStyles = [:]
     private Map<String, Font> fonts = [:]
+
+
+    /**
+     * Creates a builder for a new file
+     */
+    def ExcelFile() {
+        workbook = new HSSFWorkbook()
+    }
+
+    /**
+     * Creates a builder based on an existing file.
+     *
+     * All modifications will be on top of the given file, which
+     * serves as a base template.
+     *
+     * @param filename Path to the file
+     */
+    def ExcelFile(String filename) {
+        this(new File(filename))
+    }
+
+    /**
+     * Creates a builder based on an existing file.
+     *
+     * All modifications will be on top of the given file, which
+     * serves as a base template.
+     *
+     * @param file Existing file
+     */
+    def ExcelFile(File file) {
+        assert file.exists()
+
+        def input = new FileInputStream(file)
+        workbook = new HSSFWorkbook(input)
+        input.close()
+    }
 
     /**
      * Creates a new workbook.
@@ -126,7 +161,7 @@ class ExcelFile {
         assert name
         assert closure
 
-        sheet = workbook.createSheet(name)
+        sheet = workbook.getSheet(name) ?: workbook.createSheet(name)
         rowsCounter = 0
 
         closure.delegate = sheet
@@ -271,6 +306,15 @@ class ExcelFile {
         assert sheet
 
         sheet.createRow(rowsCounter++ as int)
+    }
+
+    void onRow (int r, Closure closure) {
+        assert sheet
+        assert r >= 0
+
+        rowsCounter = r
+        closure.delegate = this
+        closure.call()
     }
 
     void row(values) {

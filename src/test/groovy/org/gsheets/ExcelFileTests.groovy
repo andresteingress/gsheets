@@ -31,10 +31,9 @@
  */
 package org.gsheets
 
-import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.ss.usermodel.CellStyle
 import org.apache.poi.ss.usermodel.Font
-import org.apache.poi.hssf.usermodel.HSSFCell
+import org.apache.poi.ss.usermodel.Workbook
 
 /**
  * @author me@andresteingress.com
@@ -82,5 +81,59 @@ class ExcelFileTests extends GroovyTestCase {
         def excelOut = new FileOutputStream(excel)
         workbook.write(excelOut)
         excelOut.close()
+    }
+
+    void testOpenWorkbookAndEditExistingSheet() {
+        def file = createTestFile()
+        def workbook = new ExcelFile(file).workbook {
+            data {
+                sheet("SheetA") {
+                    onRow(4) {
+                        row (['new row', 'on existing', 'workbook'])
+                    }
+                }
+            }
+        }
+
+        def out = new FileOutputStream(file)
+        workbook.write(out)
+        out.close()
+    }
+
+    void testOpenWorkbookAndAddNewSheet() {
+        def file = createTestFile()
+        def workbook = new ExcelFile(file).workbook {
+            data {
+                sheet("SheetB") {
+                    header (["New", "Header"])
+                    row (["new", "row"])
+                }
+            }
+        }
+
+        def out = new FileOutputStream(file)
+        workbook.write(out)
+        out.close()
+    }
+
+    private File createTestFile() {
+        def file = File.createTempFile("gsheets", ".xls")
+        def workbook = new ExcelFile().workbook {
+            data {
+                sheet ("SheetA") {
+                    header (['HA', 'HB', 'HC'])
+
+                    3.times {
+                        row ([it, 2*it, 3*it])
+                    }
+                }
+            }
+        }
+
+        def out = new FileOutputStream(file)
+        workbook.write(out)
+        out.close()
+
+        file
     }
 }
